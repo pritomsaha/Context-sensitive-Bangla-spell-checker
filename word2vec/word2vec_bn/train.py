@@ -48,23 +48,6 @@ def retrain(new_sentences):
 	model.build_vocab(new_sentences, update=True)
 	model.train(new_sentences, total_examples = model.corpus_count, epochs = model.iter)
 
-def visualize_model(model_name):
-	from gensim.models import Word2Vec
-	from sklearn.manifold import TSNE
-	import matplotlib.pyplot as plt
-	import pandas as pa
-
-	model = Word2Vec.load(model_name)
-	vocab = list(model.wv.vocab)
-	X = model[vocab]
-	
-	tsne = TSNE(n_components=2)
-	X_tsne = tsne.fit_transform(X)
-	df = pd.concat([pd.DataFrame(X_tsne),pd.Series(vocab)],axis=1)
-	df.columns = ['x', 'y', 'word']
-
-	print(df)
-
 
 def main():
 	sentences = []
@@ -78,7 +61,5 @@ def main():
 	train(sentences, "bn_model_sg0")
 
 if __name__ == '__main__':
-	# main()
-
-	visualize_model("bn_model_sg0")
+	main()
 	
