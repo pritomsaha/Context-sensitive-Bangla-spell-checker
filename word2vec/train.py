@@ -44,9 +44,9 @@ def  train(sentences, model_name):
 	model.save(model_name)
 
 # you can retrain model with more sentences
-def retrain(new_sentences):
+def retrain(new_sentences, model_path):
 	from gensim.models import Word2Vec
-	model = Word2Vec.load('model/my_model')
+	model = Word2Vec.load(model_path)
 	model.build_vocab(new_sentences, update=True)
 	model.train(new_sentences, total_examples = model.corpus_count, epochs = model.iter)
 
@@ -62,9 +62,9 @@ def get_sentences(corpus_path):
 
 def main():
 	stopwords = open('bn_stopwords.txt', 'r').read().split(',')
-	corpus_path = "../../corpus/"
+	corpus_path = "../corpus/"
 	sentences = get_sentences(corpus_path)
-	train(sentences, "model/bn_model_sg0")
+	train(sentences, "bn_model_sg0")
 
 if __name__ == '__main__':
 	main()
