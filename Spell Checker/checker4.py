@@ -38,7 +38,7 @@ def weighted_distance(phonetic_edit_dist, edit_dist):
 	return phonetic_edit_dist*0.6 + edit_dist*0.4
 
 def generate_dictionary():
-	file = open('dict.txt', 'r')
+	file = open('../corpus/bn_lex_enc_freq.txt', 'r')
 	lines = file.readlines()
 	file.close()
 	dictionary, encode_to_word_map = {}, {}
@@ -98,38 +98,43 @@ def get_suggestion(dictionary, encode_to_word_map, input_word):
 						for word_tuple in encode_to_word_map[encoded_word]:
 							suggestion_dic[word_tuple[0]] = (word_tuple[1], weighted_distance(phonetic_edit_dist, get_edit_distance(input_word, word_tuple[0])))
 
-	return suggestion_dic
+	return sorted(suggestion_dic, key = lambda x: (suggestion_dic[x][1], -suggestion_dic[x][0]))
+
+
+def test(file_name, dictionary, encode_to_word_map):
+	count = {"in_first": 0, "in_third": 0, "in_tenth": 0, "in_all": 0}
+	total_words = 0
+	with open(file_name, 'r', encoding = "utf-8") as infile:
+		lines = infile.readlines()
+		total_words = len(lines)
+		for line in lines:
+			wrong, correct = line.split('-')
+			correct = correct.strip()
+			suggestions = get_suggestion(dictionary, encode_to_word_map, wrong.strip())
+
+			if correct in suggestions:
+				count["in_all"]+=1
+				if correct in suggestions[:10]:
+					count["in_tenth"]+=1
+					if correct in suggestions[:3]:
+						count["in_third"]+=1
+						if correct in suggestions[:1]:
+							count["in_first"]+=1
+
+	for c in count:
+		count[c] = (count[c]/total_words)*100.0
+	print(count)
+
+
 
 def main():
-	
-	dictionary, encode_to_word_map = generate_dictionary()
-	# suggestion_dic = get_suggestion(dictionary, encode_to_word_map, "অংকন")
-	# print(suggestion_dic)
-	# suggestions = sorted(suggestion_dic, key = lambda x: (suggestion_dic[x][1], -suggestion_dic[x][0]))
-	# print(suggestions)
-	file = open('test.txt', 'r')
-	lines = file.readlines()
-	file.close()
-	count=0
-	first_count = 0
-	third_count = 0
-	c=0
 	start_time = time.time()
-	for line in lines:
-		wrong, correct = line.split('-')
-		correct = correct.strip()
-		suggestion_dic = get_suggestion(dictionary, encode_to_word_map, wrong.strip())
-		
-		suggestions = sorted(suggestion_dic, key = lambda x: (suggestion_dic[x][1], -suggestion_dic[x][0]))
-		if correct in suggestions[:10]:
-			count+=1
-			if correct in suggestions[:3]:
-				third_count  += 1
-				if correct == suggestions[0]:
-					first_count  += 1
-
-	print(count, third_count,  first_count)
-	print(time.time()-start_time)
+	dictionary, encode_to_word_map = generate_dictionary()
+	print((time.time() - start_time))
+	start_time = time.time()
+	test("test.txt", dictionary, encode_to_word_map)
+	print((time.time() - start_time))
+	
 	
 if __name__ == '__main__':
 	main()
@@ -152,3 +157,5 @@ if __name__ == '__main__':
 # upto 5th postion: 95%
 # upto 10th position: 97%
 # average time per word: 8 ms
+
+# {'in_third': 93.33333333333333, 'in_tenth': 96.82539682539682, 'in_first': 77.46031746031747, 'in_all': 97.93650793650794}
