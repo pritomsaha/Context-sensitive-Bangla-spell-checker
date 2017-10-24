@@ -66,9 +66,16 @@ class RuleFileParser(object):
 
 		return word
 
+	def stemOfWords(self, words):
+		words = [self.stemOfWord(w) for w in words]
+		return words
+
+
+def  bangla_stemmer():
+	return RuleFileParser()
 
 
 if __name__ == '__main__':
 	rule_file_parser = RuleFileParser()
-	print(rule_file_parser.stemOfWord("করিমেরগুলো"))
+	print(rule_file_parser.stemOfWord("কার্যাবলি"))
 		

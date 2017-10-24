@@ -1,4 +1,5 @@
 import re
+from bangla_stemmer import bangla_stemmer
 import logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',level=logging.INFO)
 
@@ -7,6 +8,7 @@ stopwords = []
 def  get_bn_wordlist(text, remove_stopwords = False):
 	text = re.sub(bn_char_pattern, ' ', text)
 	words = text.strip().split(" ")
+	words = bangla_stemmer().stemOfWords(words)
 
 	if remove_stopwords:
 		words = [w for w in words if w not in stopwords]
@@ -44,7 +46,7 @@ def  train(sentences, model_name):
 # you can retrain model with more sentences
 def retrain(new_sentences):
 	from gensim.models import Word2Vec
-	model = Word2Vec.load('my_model')
+	model = Word2Vec.load('model/my_model')
 	model.build_vocab(new_sentences, update=True)
 	model.train(new_sentences, total_examples = model.corpus_count, epochs = model.iter)
 
@@ -52,13 +54,13 @@ def retrain(new_sentences):
 def main():
 	sentences = []
 	stopwords = open('bn_stopwords.txt', 'r').read().split(',')
-	bn_wiki_file = open('ben_wikipedia_2011_100K-sentences.txt', 'r')
+	bn_wiki_file = open('corpus/ben_wikipedia_2011_100K-sentences.txt', 'r')
 	lines = bn_wiki_file.readlines()
 	
 	for line in lines:
 		sentences.append(get_bn_wordlist(line, True))
 
-	train(sentences, "bn_model_sg0")
+	train(sentences, "model/bn_model_sg0")
 
 if __name__ == '__main__':
 	main()
