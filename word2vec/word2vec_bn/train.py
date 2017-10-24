@@ -1,5 +1,5 @@
-import re
-from bangla_stemmer import bangla_stemmer
+import re, os
+from stemmer.bangla_stemmer import bangla_stemmer
 import logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',level=logging.INFO)
 
@@ -29,16 +29,16 @@ def  get_en_wordlist(text, remove_stopwords = False):
 def  train(sentences, model_name):
 	from gensim.models import word2vec
 	
-	num_features = 200   # Word vector dimensionality                      
-	min_word_count = 5   # Minimum word count                        
+	num_features = 300   # Word vector dimensionality                      
+	min_word_count = 40   # Minimum word count                        
 	num_workers = 4       # Number of threads to run in parallel
-	context = 5        # Context window size                                                                                    
-	# downsampling = 1e-3   # Downsample setting for frequent words
+	context = 10        # Context window size                                                                                    
+	downsampling = 1e-3   # Downsample setting for frequent words
 
 	print("Training model.......")
 	model = word2vec.Word2Vec(sentences, workers=num_workers, \
             size=num_features, min_count = min_word_count, \
-            window = context, sg = 0)
+            window = context, sg = 0, sample = downsampling)
 
 	model.init_sims(replace = True)
 	model.save(model_name)
@@ -50,16 +50,20 @@ def retrain(new_sentences):
 	model.build_vocab(new_sentences, update=True)
 	model.train(new_sentences, total_examples = model.corpus_count, epochs = model.iter)
 
+def get_sentences(corpus_path):
+	folder_names = ['newspaper', 'web', 'wiki']
+	sentences = []
+	for folder_name in folder_names:
+		for file_name in os.listdir(corpus_path+folder_name):
+			with open(corpus_path+folder_name+'/'+file_name, 'r', encoding = "utf-8") as infile:
+				for line in infile:
+					sentences.append(get_bn_wordlist(line, True))
+	return sentences
 
 def main():
-	sentences = []
 	stopwords = open('bn_stopwords.txt', 'r').read().split(',')
-	bn_wiki_file = open('corpus/ben_wikipedia_2011_100K-sentences.txt', 'r')
-	lines = bn_wiki_file.readlines()
-	
-	for line in lines:
-		sentences.append(get_bn_wordlist(line, True))
-
+	corpus_path = "../../corpus/"
+	sentences = get_sentences(corpus_path)
 	train(sentences, "model/bn_model_sg0")
 
 if __name__ == '__main__':
