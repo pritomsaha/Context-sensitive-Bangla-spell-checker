@@ -1,6 +1,7 @@
 import time
 encodes = {"অ" :"o",  "আ": "a", "া": "a",  "ই": "i", "ঈ": "i", "ি":"i", "ী" : "i", "উ" : "u", "ঊ": "u", "ু": "u", "ূ": "u", "এ": "e", "ে": "e", "ঐ": "oi", "ৈ": "oi", "ও": "o", "ঔ": "ou","ৌ": "ou", "ক": "k", "খ": "k", "গ": "g", "ঘ": "g", "ঙ": "ng", "ং": "ng", "চ": "c", "ছ": "c", "য": "j", "জ": "j", "ঝ": "j", "ঞ": "n", "ট": "T", "ঠ": "T", "ড": "D", "ঢ": "D", "ঋ": "ri", "র": "r", "ড়": "r", "ঢ়": "r", "ন": "n", "ণ": "n", "ত": "t", "থ": "t", "দ": "d", "ধ": "d", "প": "p", "ফ": "p", "ব": "b", "ভ": "b", "ম": "m", "য়": "y", "ল": "l", "শ": "s", "স": "s", "ষ": "s", "হ": "h", "ঃ" : "h", "ৎ": "t"}
 max_edit_distance = 2
+dict_path = '../corpus/encwordlist.txt'
 
 def get_edit_distance(word1, word2):
     m, n = len(word1), len(word2)
@@ -38,27 +39,25 @@ def weighted_distance(phonetic_edit_dist, edit_dist):
 	return phonetic_edit_dist*0.6 + edit_dist*0.4
 
 def generate_dictionary():
-	file = open('../corpus/bn_lex_enc_freq.txt', 'r')
-	lines = file.readlines()
-	file.close()
 	dictionary, encode_to_word_map = {}, {}
-	for line in lines:
-		encoded_word, real_word,  count = line.strip().split()
-		if encoded_word in encode_to_word_map:
-			encode_to_word_map[encoded_word].append((real_word, int(count)))
-		else: 
-			encode_to_word_map[encoded_word] = [(real_word, int(count))]
+	with open(dict_path, 'r', encoding = "utf-8") as lines:
+		for line in lines:
+			encoded_word, real_word,  count = line.strip().split()
+			if encoded_word in encode_to_word_map:
+				encode_to_word_map[encoded_word].append((real_word, int(count)))
+			else: 
+				encode_to_word_map[encoded_word] = [(real_word, int(count))]
 
-		if encoded_word not in dictionary:
-			dictionary[encoded_word] = []
-		
-		delete_words = []
-		create_delete_list(encoded_word, delete_words)
+			if encoded_word not in dictionary:
+				dictionary[encoded_word] = []
+			
+			delete_words = []
+			create_delete_list(encoded_word, delete_words)
 
-		for item in delete_words:
-			if item in dictionary:
-				dictionary[item].append(encoded_word)
-			else: dictionary[item] = [encoded_word]
+			for item in delete_words:
+				if item in dictionary:
+					dictionary[item].append(encoded_word)
+				else: dictionary[item] = [encoded_word]
 	return dictionary, encode_to_word_map
 
 def get_suggestion(dictionary, encode_to_word_map, input_word):

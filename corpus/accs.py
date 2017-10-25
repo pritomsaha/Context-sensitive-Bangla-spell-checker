@@ -3,6 +3,9 @@ import re, os
 bn_char_pattern = re.compile(r'[^\u0980-\u0983\u0985-\u098C\u098F-\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7-\u09C8\u09CB-\u09CE\u09D7\u09DC-\u09DD\u09DF-\u09E3\u09F0-\u09FD]', re.UNICODE)
 
 word_freq = {}
+bnwordlist_path = "bnwordlist.txt"
+bnwordfreq_path = "bnwordfreq.txt"
+encwordlist_path = "encwordlist.txt"
 
 def  get_wordlist(text):
 	text = re.sub(bn_char_pattern, ' ', text)
@@ -21,13 +24,13 @@ def count_word(folder_name):
 
 
 def create_word_freq():
-	folders = ['newspaper', 'web', 'wiki']
+	folders = ['newspaper', 'corp']
 	for folder in folders:
 		count_word(folder)
 
-	file = open ("words_freq.txt", "w", encoding = "utf-8")	
+	file = open (bnwordfreq_path, "w", encoding = "utf-8")	
 
-	with open('bn_lexicon.txt', 'r', encoding = "utf-8") as infile:
+	with open(bnwordlist_path, 'r', encoding = "utf-8") as infile:
 		for line in infile:
 			word = line.strip()
 			count = word_freq.get(word, 1)
@@ -36,20 +39,19 @@ def create_word_freq():
 	file.close()
 
 def add_test_word():
-	words = []
-	with open('bn_lexicon.txt', 'r', encoding = 'utf-8') as infile:
+	words = set()
+	with open(bnwordlist_path, 'r', encoding = 'utf-8') as infile:
 		for line in infile:
-			words.append(line.strip())
+			words.add(line.strip())
 
 	with open('test.txt', 'r', encoding = 'utf-8') as infile:
 		for line in infile:
 			word = line.split("-")[1].strip()
-			if word not in words:
-				words.append(word)
+			words.add(word)
 
-	words = sorted(words)
+	words = sorted(list(words))
 
-	with open('bn_lexicon.txt', 'w', encoding = 'utf-8') as infile:
+	with open(bnwordlist_path, 'w', encoding = 'utf-8') as infile:
 		for word in words:
 			infile.write(word+"\n")
 
@@ -64,10 +66,10 @@ def create_encoded_freq_lexicon():
 				encoded_word += encodes[w]
 		return encoded_word
 
-	with open('words_freq.txt', 'r', encoding = "utf-8") as infile:
-		file = open('bn_lex_enc_freq.txt', 'w', encoding = "utf-8")
+	with open(bnwordfreq_path, 'r', encoding = "utf-8") as infile:
+		file = open(encwordlist_path, 'w', encoding = "utf-8")
 		for line in infile.readlines():
-			# print(line)
+			print(line)
 			word, count = line.strip().split()
 			encoded_word = get_encoded_word(word)
 			file.write(encoded_word+" "+word+" "+count+"\n")
