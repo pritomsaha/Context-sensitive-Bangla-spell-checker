@@ -1,59 +1,152 @@
-from TST import TST
-from _io import open
-letters = "অআইঈউঊঋএঐওঔকখখগঘঙচছজঝঞটঠডঢণতথদধনপফবভমযরলশষসহড়ঢ়য়ৎংঃঁািীুূৃেৈো্"
-letters2 = "ঁািীুূৃেৈো্"
-letters3 = "ৎংঃঁািীুূৃেৈো্"
-def isValid(word):
-    if len(word) == 0: return False
-    if word[0] in letters3:
-        return False
-    prev = '???'
-    for letter in word:
-        if letter in letters2 and prev in letters2:
-            return False
-        prev = letter
-    return True
+import time
+from phonetic_encoder import soundex_encode, doublemetaphone_encode
+encodes = {"অ" :"o",  "আ": "a", "া": "a",  "ই": "i", "ঈ": "i", "ি":"i", "ী" : "i", "উ" : "u", "ঊ": "u", "ু": "u", "ূ": "u", "এ": "e", "ে": "e", "ঐ": "oi", "ৈ": "oi", "ও": "o", "ঔ": "ou","ৌ": "ou", "ক": "k", "খ": "k", "গ": "g", "ঘ": "g", "ঙ": "ng", "ং": "ng", "চ": "c", "ছ": "c", "য": "j", "জ": "j", "ঝ": "j", "ঞ": "n", "ট": "T", "ঠ": "T", "ড": "D", "ঢ": "D", "ঋ": "ri", "র": "r", "ড়": "r", "ঢ়": "r", "ন": "n", "ণ": "n", "ত": "t", "থ": "t", "দ": "d", "ধ": "d", "প": "p", "ফ": "p", "ব": "b", "ভ": "b", "ম": "m", "য়": "y", "ল": "l", "শ": "s", "স": "s", "ষ": "s", "হ": "h", "ঃ" : "h", "ৎ": "t"}
+max_edit_distance = 1
+dict_path = '../encwordlist.txt'
+doublemetaphone = True
+def get_edit_distance(word1, word2):
+    m, n = len(word1), len(word2)
+    # if abs(m-n)>max_edit_distance: return max_edit_distance+1
+    dp = [[0 for v in range(m+1) ] for __ in range(n+1) ]
+    for i in range(m+1):
+        dp[0][i] = i
+    for i in range(n+1):
+        dp[i][0] = i
+    for j in range(1, m+1):
+        for i in range(1, n+1):
+            dp[i][j] = min(dp[i-1][j-1] + (word1[j-1]!=word2[i-1]) , dp[i-1][j]+1, dp[i][j-1]+1)
+            
+    return dp[n][m]
 
-def edit1(word):
+def get_encoded_word(word):
+	return doublemetaphone_encode(word) if doublemetaphone else soundex_encode(word)
+
+def create_delete_list(word, delete_words, edit_distance = 1):
 	l = len(word)
-	splits = [(word[:i], word[i:]) for i in range(l+1)]
-	deletes = {L + R[1:] for L, R in splits if R and isValid(L + R[1:])}
-	replaces = {L + c + R[1:] for L, R in splits if R for c in letters if c!=R[0] and isValid(L + c + R[1:])}
-	inserts = {L + c + R for L, R in splits for c in letters if isValid(L + c + R)}
-	return deletes | replaces | inserts
+	if edit_distance > max_edit_distance or l <3 : return
+	
+	for c in range(l):
+		new_word = word[:c] + word[c+1:]
+		if new_word not in delete_words:
+			delete_words.append(new_word)
+			if len(new_word) > 2:
+				create_delete_list(new_word, delete_words, edit_distance + 1)
 
-def get_possible_words(word):
-    edit1_words = edit1(word)
-    edit2_words = {e2 for e1 in edit1_words for e2 in edit1(e1)}
-    return edit1_words | edit2_words
+def weighted_distance(phonetic_edit_dist, edit_dist):
+	return phonetic_edit_dist*0.6 + edit_dist*0.4
 
-def get_suggestion(input_word, tst):
-    possible_words = get_possible_words(input_word)
-    suggestion_words = []
-    for word in possible_words:
-        prior = tst.search(word)
-        if prior is not None:
-            suggestion_words.append((prior, word))
-    return suggestion_words
-    
+def generate_dictionary():
+	dictionary, encode_to_word_map = {}, {}
+	with open(dict_path, 'r', encoding = "utf-8") as lines:
+		for line in lines:
+			encoded_word, real_word,  count = line.strip().split()
+			if encoded_word in encode_to_word_map:
+				encode_to_word_map[encoded_word].append((real_word, int(count)))
+			else: 
+				encode_to_word_map[encoded_word] = [(real_word, int(count))]
+
+			if encoded_word not in dictionary:
+				dictionary[encoded_word] = []
+			
+			delete_words = []
+			create_delete_list(encoded_word, delete_words)
+
+			for item in delete_words:
+				if item in dictionary:
+					dictionary[item].append(encoded_word)
+				else: dictionary[item] = [encoded_word]
+	return dictionary, encode_to_word_map
+
+def get_suggestion(dictionary, encode_to_word_map, input_word):
+	suggestion_dic = {}
+	encoded_input_word = get_encoded_word(input_word)
+	encoded_input_word_len = len(encoded_input_word)
+	listed_encoded_words = []
+	if encoded_input_word in dictionary:
+		if encoded_input_word in encode_to_word_map:
+			listed_encoded_words.append(encoded_input_word)
+			for word_tuple in encode_to_word_map[encoded_input_word]:
+				suggestion_dic[word_tuple[0]] = (word_tuple[1], weighted_distance(0, get_edit_distance(input_word, word_tuple[0])))
+
+		for encoded_word in dictionary[encoded_input_word]:
+			if encoded_word not in listed_encoded_words:
+				listed_encoded_words.append(encoded_word)
+				phonetic_edit_dist = len(encoded_word) - encoded_input_word_len
+				for word_tuple in encode_to_word_map[encoded_word]:
+					suggestion_dic[word_tuple[0]] = (word_tuple[1], weighted_distance(phonetic_edit_dist, get_edit_distance(input_word, word_tuple[0])))
+	
+	encoded_delete_words = []
+	create_delete_list(encoded_input_word, encoded_delete_words)
+	for encoded_delete_word in encoded_delete_words:
+		if encoded_delete_word in dictionary:
+			if encoded_delete_word in encode_to_word_map:
+				if encoded_delete_word not in listed_encoded_words:
+					listed_encoded_words.append(encoded_delete_word)
+					phonetic_edit_dist = encoded_input_word_len - len(encoded_delete_word)
+					for word_tuple in encode_to_word_map[encoded_delete_word]:
+						suggestion_dic[word_tuple[0]] = (word_tuple[1], weighted_distance(phonetic_edit_dist, get_edit_distance(input_word, word_tuple[0])))
+
+			else:
+				for encoded_word in dictionary[encoded_delete_word]:
+					if encoded_word not in listed_encoded_words:
+						listed_encoded_words.append(encoded_word)
+						phonetic_edit_dist = get_edit_distance(encoded_word, encoded_input_word)
+						for word_tuple in encode_to_word_map[encoded_word]:
+							suggestion_dic[word_tuple[0]] = (word_tuple[1], weighted_distance(phonetic_edit_dist, get_edit_distance(input_word, word_tuple[0])))
+
+	return sorted(suggestion_dic, key = lambda x: (suggestion_dic[x][1], -suggestion_dic[x][0]))
+
+
+def test(file_name, dictionary, encode_to_word_map):
+	count = {"in_first": 0, "in_third": 0, "in_tenth": 0, "in_all": 0}
+	total_words = 0
+	with open(file_name, 'r', encoding = "utf-8") as infile:
+		lines = infile.readlines()
+		total_words = len(lines)
+		for line in lines:
+			wrong, correct = line.split('-')
+			correct = correct.strip()
+			suggestions = get_suggestion(dictionary, encode_to_word_map, wrong.strip())
+
+			if correct in suggestions:
+				count["in_all"]+=1
+				if correct in suggestions[:10]:
+					count["in_tenth"]+=1
+					if correct in suggestions[:3]:
+						count["in_third"]+=1
+						if correct in suggestions[:1]:
+							count["in_first"]+=1
+
+	for c in count:
+		count[c] = (count[c]/total_words)*100.0
+	print(count)
+
+
+
+def main():
+	start_time = time.time()
+	dictionary, encode_to_word_map = generate_dictionary()
+	print((time.time() - start_time))
+	start_time = time.time()
+	test("test.txt", dictionary, encode_to_word_map)
+	print((time.time() - start_time))
+	
+	
 if __name__ == '__main__':
-    dic_file = open('words_freq.txt', 'r')
-    dic_words = dic_file.readlines()
-    dic_file.close()
-    tst = TST()
-    for line in dic_words:
-        word, count = line.strip().split()
-        tst.insert(word, int(count))
-    
-    file = open('test.txt')
-    lines = file.readlines()
-    file.close()
-    success_count = 0
-    for line in lines:
-        wrong_word, correct_word = line.strip().split('-')
-        suggestions = get_suggestion(wrong_word.strip(), tst)
-        if correct_word.strip() in (item[1] for item in suggestions):
-            success_count += 1
-        print(success_count)
-    print(success_count)
-        
+	main()
+#	print(soundex_encode("অনার্য"), doublemetaphone_encode("অনার্য"))
+
+# accuracy using wiki data
+
+# max_phonetic edit distance = 2
+	# soundex
+	# {'in_third': 94.12698412698413, 'in_all': 98.09523809523809, 'in_first': 77.77777777777779, 'in_tenth': 96.82539682539682}
+	
+	# doublemetaphone
+	# {'in_all': 98.09523809523809, 'in_tenth': 97.46031746031746, 'in_third': 95.55555555555556, 'in_first': 79.84126984126985}
+	
+# max_phonetic edit distance = 1
+	# soundex
+	# {'in_all': 94.76190476190476, 'in_third': 93.33333333333333, 'in_first': 77.61904761904762, 'in_tenth': 94.6031746031746}
+	# doublemetaphone
+	# {'in_third': 94.12698412698413, 'in_first': 79.36507936507937, 'in_tenth': 95.23809523809523, 'in_all': 95.3968253968254}

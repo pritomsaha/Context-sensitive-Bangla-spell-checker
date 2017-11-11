@@ -1,4 +1,5 @@
 import re, os
+import time
 from collections import Counter
 bn_char_pattern = re.compile(r'[^\u0980-\u0983\u0985-\u098C\u098F-\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7-\u09C8\u09CB-\u09CE\u09D7\u09DC-\u09DD\u09DF-\u09E3\u09F0-\u09FD]', re.UNICODE)
 corpus_path = "../corp"
@@ -41,7 +42,31 @@ def  save_ngrams(ngrams, n):
 	with open(str(n)+"_gram.txt", "a") as file:
 		for key in ngrams:
 			ngram_str = "_".join(k for k in key)
-			file.write(ngram_str+"\t"+ str(ngrams[key])+"\n")
+			file.write(ngram_str+"	"+ str(ngrams[key])+"\n")
+			
+
+def build_TST():
+	from TST import TST
+	tst = TST()
+	corpus_path = "n-gram_corpus"
+	
+	for file_name in os.listdir(corpus_path):
+		with open(os.path.join(corpus_path, file_name), 'r', encoding = "utf-8") as file:
+			data = file.readlines()
+			chunks_data = chunks(data)
+			counter = 1
+			for chunk in chunks_data:
+				for line in chunk:
+					data = line.strip().split()
+					if len(data) == 2:
+						tst.insert(data[0], int(data[1]))
+				print(counter)
+				counter += 1
+	
+	print("success")
+	inp = int(input("proceed to see depth?"))
+	if inp:
+		print(tst.depth())
 
 def main():
 	stopwords = open(stopwords_path, 'r').read().rstrip('\n').split(',')
@@ -49,48 +74,40 @@ def main():
 	generate_ngram_count(2)
 	generate_ngram_count(3)
 
+def chunks(data, rows = 10000):
+	l = len(data)
+	for i in range(0, l, rows):
+		yield data[i:i+rows]
+
+def save_to_db():
+	import sqlite3
+	conn = sqlite3.connect("ngrams.db")
+	cur = conn.cursor()
+	start = time.time()
+	# sql_create_table = "create table if not exists bigrams (grams varchar(50) NOT NULL unique,count integer NOT NULL);"
+	# cur.execute(sql_create_table)
+	counter = 1
+	sql_create_row = "insert into bigrams (grams, count) values(?, ?);"
+	with open('2_gram.txt', 'r') as file:
+		data = file.readlines()
+		chunks_data = chunks(data)
+		for chunk in chunks_data:
+			rows = []
+			for line in chunk:
+				data = line.strip().split()
+				if len(data) == 2:
+					rows.append((data[0], int(data[1])))
+				
+			cur.executemany(sql_create_row, rows)
+			print(counter)
+			counter += 1
+
+	conn.commit()
+	conn.close()
+	print(time.time() - start)
+	
 
 if __name__ == '__main__':
-	main()
+	# main()
+	build_TST()
 
-
-# unigrams = []
-# bigrams = []
-# trigrams = []
-# fourgrams = []
-
-# with open("sentences.txt") as infile:
-# 	for line in infile:
-# 		words = line.split()
-# 		unigrams += words
-# 		l = len(words)
-# 		for i in range(0, l-1):
-# 			bigrams.append((words[i], words[i+1]))
-
-# 		for i in range(0, l-2):
-# 			trigrams.append((words[i], words[i+1], words[i+2]))
-
-# 		for i in range(0, l-3):
-# 			fourgrams.append((words[i], words[i+1], words[i+2], words[i+3]))
-
-# unigrams = Counter(unigrams)
-# bigrams = Counter(bigrams)
-# trigrams = Counter(trigrams)
-# fourgrams = Counter(fourgrams)
-
-# bigram_file = open('n_grams/bigrams.txt', 'a')
-# trigram_file = open('n_grams/trigrams.txt', 'a')
-# fourgram_file = open('n_grams/fourgrams.txt', 'a')
-
-# for key in bigrams:
-# 	bigram_file.write(key[0]+" "+key[1]+"	"+ str(bigrams[key])+"	"+ str(unigrams[key[0]])+"\n")
-
-# for key in trigrams:
-# 	trigram_file.write(key[0]+" "+key[1]+" "+key[2]+"	"+ str(trigrams[key])+"	"+ str(bigrams[(key[0], key[1])])+"\n")
-
-# for key in fourgrams:
-# 	fourgram_file.write(key[0]+" "+key[1]+" "+key[2]+" "+key[3]+"	"+ str(fourgrams[key])+"	"+ str(trigrams[(key[0], key[1], key[2])])+"\n")
-
-# bigram_file.close()
-# trigram_file.close()
-# fourgram_file.close()

@@ -1,11 +1,12 @@
 import re, os
-
+from phonetic_encoder import soundex_encode, doublemetaphone_encode
 bn_char_pattern = re.compile(r'[^\u0980-\u0983\u0985-\u098C\u098F-\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7-\u09C8\u09CB-\u09CE\u09D7\u09DC-\u09DD\u09DF-\u09E3\u09F0-\u09FD]', re.UNICODE)
 
 word_freq = {}
 bnwordlist_path = "bnwordlist.txt"
 bnwordfreq_path = "bnwordfreq.txt"
 encwordlist_path = "encwordlist.txt"
+corpus_path = "../corp"
 
 def  get_wordlist(text):
 	text = re.sub(bn_char_pattern, ' ', text)
@@ -24,10 +25,7 @@ def count_word(folder_name):
 
 
 def create_word_freq():
-	folders = ['newspaper', 'corp']
-	for folder in folders:
-		count_word(folder)
-
+	count_word(corpus_path)
 	file = open (bnwordfreq_path, "w", encoding = "utf-8")	
 
 	with open(bnwordlist_path, 'r', encoding = "utf-8") as infile:
@@ -57,19 +55,13 @@ def add_test_word():
 
 
 def create_encoded_freq_lexicon():
-	encodes = {"অ" :"o",  "আ": "a", "া": "a",  "ই": "i", "ঈ": "i", "ি":"i", "ী" : "i", "উ" : "u", "ঊ": "u", "ু": "u", "ূ": "u", "এ": "e", "ে": "e", "ঐ": "oi", "ৈ": "oi", "ও": "o", "ঔ": "ou","ৌ": "ou", "ক": "k", "খ": "k", "গ": "g", "ঘ": "g", "ঙ": "ng", "ং": "ng", "চ": "c", "ছ": "c", "য": "j", "জ": "j", "ঝ": "j", "ঞ": "n", "ট": "T", "ঠ": "T", "ড": "D", "ঢ": "D", "ঋ": "ri", "র": "r", "ড়": "r", "ঢ়": "r", "ন": "n", "ণ": "n", "ত": "t", "থ": "t", "দ": "d", "ধ": "d", "প": "p", "ফ": "p", "ব": "b", "ভ": "b", "ম": "m", "য়": "y", "ল": "l", "শ": "s", "স": "s", "ষ": "s", "হ": "h", "ঃ" : "h", "ৎ": "t"}
 	
 	def get_encoded_word(word):
-		encoded_word = ""
-		for w in word:
-			if w in encodes:
-				encoded_word += encodes[w]
-		return encoded_word
+		return doublemetaphone_encode(word)
 
 	with open(bnwordfreq_path, 'r', encoding = "utf-8") as infile:
 		file = open(encwordlist_path, 'w', encoding = "utf-8")
 		for line in infile.readlines():
-			print(line)
 			word, count = line.strip().split()
 			encoded_word = get_encoded_word(word)
 			file.write(encoded_word+" "+word+" "+count+"\n")
@@ -78,8 +70,8 @@ def create_encoded_freq_lexicon():
 
 
 if __name__ == '__main__':
-	add_test_word()
-	create_word_freq()
+#	add_test_word()
+#	create_word_freq()
 	create_encoded_freq_lexicon()
 
 	
