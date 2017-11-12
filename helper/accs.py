@@ -5,8 +5,11 @@ bn_char_pattern = re.compile(r'[^\u0980-\u0983\u0985-\u098C\u098F-\u0990\u0993-\
 word_freq = {}
 bnwordlist_path = "bnwordlist.txt"
 bnwordfreq_path = "bnwordfreq.txt"
-encwordlist_path = "encwordlist.txt"
+encwordlist_path = "../sd_encwordlist.txt"
 corpus_path = "../corp"
+doublemetaphone = True
+if doublemetaphone:
+	encwordlist_path = "../dm_encwordlist.txt"
 
 def  get_wordlist(text):
 	text = re.sub(bn_char_pattern, ' ', text)
@@ -24,55 +27,43 @@ def count_word(folder_name):
 					word_freq[word] = count + 1
 
 
-def create_word_freq():
+def get_word_freq():
 	count_word(corpus_path)
-	file = open (bnwordfreq_path, "w", encoding = "utf-8")	
-
 	with open(bnwordlist_path, 'r', encoding = "utf-8") as infile:
 		for line in infile:
 			word = line.strip()
 			count = word_freq.get(word, 1)
-			file.write(word+" "+str(count)+"\n")
+			yield word, count
+			
+# def add_test_word():
+# 	words = set()
+# 	with open(bnwordlist_path, 'r', encoding = 'utf-8') as infile:
+# 		for line in infile:
+# 			words.add(line.strip())
 
-	file.close()
+# 	with open('test.txt', 'r', encoding = 'utf-8') as infile:
+# 		for line in infile:
+# 			word = line.split("-")[1].strip()
+# 			words.add(word)
 
-def add_test_word():
-	words = set()
-	with open(bnwordlist_path, 'r', encoding = 'utf-8') as infile:
-		for line in infile:
-			words.add(line.strip())
+# 	words = sorted(list(words))
 
-	with open('test.txt', 'r', encoding = 'utf-8') as infile:
-		for line in infile:
-			word = line.split("-")[1].strip()
-			words.add(word)
-
-	words = sorted(list(words))
-
-	with open(bnwordlist_path, 'w', encoding = 'utf-8') as infile:
-		for word in words:
-			infile.write(word+"\n")
+# 	with open(bnwordlist_path, 'w', encoding = 'utf-8') as infile:
+# 		for word in words:
+# 			infile.write(word+"\n")
 
 
 def create_encoded_freq_lexicon():
 	
 	def get_encoded_word(word):
-		return doublemetaphone_encode(word)
+		return doublemetaphone_encode(word) if doublemetaphone else soundex_encode(word)
 
-	with open(bnwordfreq_path, 'r', encoding = "utf-8") as infile:
-		file = open(encwordlist_path, 'w', encoding = "utf-8")
-		for line in infile.readlines():
-			word, count = line.strip().split()
+	with open(encwordlist_path, "w", encoding = "utf-8") as file:
+		dic_word_freq = get_word_freq()
+		for word, count in dic_word_freq:
 			encoded_word = get_encoded_word(word)
-			file.write(encoded_word+" "+word+" "+count+"\n")
-			
-		file.close()
+			file.write(encoded_word+" "+word+" "+str(count)+"\n")
 
 
 if __name__ == '__main__':
-#	add_test_word()
-#	create_word_freq()
 	create_encoded_freq_lexicon()
-
-	
-

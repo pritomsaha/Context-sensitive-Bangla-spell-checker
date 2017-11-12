@@ -1,10 +1,10 @@
 import re, os
-from stemmer.bangla_stemmer import bangla_stemmer
+# from stemmer.bangla_stemmer import bangla_stemmer
 import logging
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',level=logging.INFO)
-corpus_path = "../corp"
+corpus_path = "../new_corp"
 stopwords_path = "../stop-words.txt"
-model_path = "bn_model_win4"
+model_path = "bn_model"
 bn_char_pattern = re.compile(r'[^\u0980-\u0983\u0985-\u098C\u098F-\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7-\u09C8\u09CB-\u09CE\u09D7\u09DC-\u09DD\u09DF-\u09E3\u09F0-\u09FD]', re.UNICODE)
 stopwords = []
 
@@ -45,12 +45,12 @@ def  train(sentences):
 	min_count = 10   # Minimum word count                        
 	workers = 4       # Number of threads to run in parallel
 	window = 4       # Context window size                                                                                    
-	# sample = 1e-3   # Downsample setting for frequent words
+	sample = 1e-3   # Downsample setting for frequent words
 
 	print("Training model.......")
 	model = word2vec.Word2Vec(sentences, workers=workers, \
             size=size, min_count = min_count, \
-            window = window, sg = 0)
+            window = window, sg = 0, sample = sample)
 
 	model.save(model_path)
 
@@ -60,21 +60,13 @@ def retrain(new_sentences):
 	model = Word2Vec.load(model_path)
 	model.build_vocab(new_sentences, update=True)
 	model.train(new_sentences, total_examples = model.corpus_count, epochs = model.iter)
-
-def get_sentences():
-	folder_names = ['web', 'wiki']
-	sentences = []
-	for folder_name in folder_names:
-		for file_name in os.listdir(corpus_path+folder_name):
-			with open(corpus_path+folder_name+'/'+file_name, 'r', encoding = "utf-8") as infile:
-				for line in infile:
-					sentences.append(get_bn_wordlist(line, True))
-	return sentences
+	model.save(model_path)
 
 def main():
 	stopwords = open(stopwords_path, 'r').read().rstrip('\n').split(',')
 	sentences = Sentences(corpus_path)
-	train(sentences)
+	# train(sentences)
+	retrain(sentences)
 
 if __name__ == '__main__':
 	main()

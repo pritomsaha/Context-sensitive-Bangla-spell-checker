@@ -5,6 +5,7 @@ bn_char_pattern = re.compile(r'[^\u0980-\u0983\u0985-\u098C\u098F-\u0990\u0993-\
 corpus_path = "../corp"
 stopwords_path = "../stop-words.txt"
 stopwords = []
+ngram_corpus_path = "n-gram_corpus"
 
 def  get_bn_wordlist(text, remove_stopwords = False):
 	text = re.sub(bn_char_pattern, ' ', text)
@@ -48,7 +49,6 @@ def  save_ngrams(ngrams, n):
 def build_TST():
 	from TST import TST
 	tst = TST()
-	corpus_path = "n-gram_corpus"
 	
 	for file_name in os.listdir(corpus_path):
 		with open(os.path.join(corpus_path, file_name), 'r', encoding = "utf-8") as file:
@@ -79,7 +79,7 @@ def chunks(data, rows = 10000):
 	for i in range(0, l, rows):
 		yield data[i:i+rows]
 
-def save_to_db():
+def save_to_db(file_name, table_name):
 	import sqlite3
 	conn = sqlite3.connect("ngrams.db")
 	cur = conn.cursor()
@@ -87,8 +87,8 @@ def save_to_db():
 	# sql_create_table = "create table if not exists bigrams (grams varchar(50) NOT NULL unique,count integer NOT NULL);"
 	# cur.execute(sql_create_table)
 	counter = 1
-	sql_create_row = "insert into bigrams (grams, count) values(?, ?);"
-	with open('2_gram.txt', 'r') as file:
+	sql_create_row = "insert into "+table_name+" (grams, count) values(?, ?);"
+	with open(ngram_corpus_path+'/'+file_name, 'r') as file:
 		data = file.readlines()
 		chunks_data = chunks(data)
 		for chunk in chunks_data:
@@ -109,5 +109,5 @@ def save_to_db():
 
 if __name__ == '__main__':
 	# main()
-	build_TST()
+	save_to_db("3_gram.txt", "trigrams")
 

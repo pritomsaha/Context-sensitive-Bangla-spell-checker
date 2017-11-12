@@ -1,9 +1,10 @@
 import time
 from phonetic_encoder import soundex_encode, doublemetaphone_encode
-encodes = {"অ" :"o",  "আ": "a", "া": "a",  "ই": "i", "ঈ": "i", "ি":"i", "ী" : "i", "উ" : "u", "ঊ": "u", "ু": "u", "ূ": "u", "এ": "e", "ে": "e", "ঐ": "oi", "ৈ": "oi", "ও": "o", "ঔ": "ou","ৌ": "ou", "ক": "k", "খ": "k", "গ": "g", "ঘ": "g", "ঙ": "ng", "ং": "ng", "চ": "c", "ছ": "c", "য": "j", "জ": "j", "ঝ": "j", "ঞ": "n", "ট": "T", "ঠ": "T", "ড": "D", "ঢ": "D", "ঋ": "ri", "র": "r", "ড়": "r", "ঢ়": "r", "ন": "n", "ণ": "n", "ত": "t", "থ": "t", "দ": "d", "ধ": "d", "প": "p", "ফ": "p", "ব": "b", "ভ": "b", "ম": "m", "য়": "y", "ল": "l", "শ": "s", "স": "s", "ষ": "s", "হ": "h", "ঃ" : "h", "ৎ": "t"}
 max_edit_distance = 1
-dict_path = '../encwordlist.txt'
+dict_path = "../sd_encwordlist.txt"
 doublemetaphone = True
+if doublemetaphone:
+	dict_path = "../dm_encwordlist.txt"
 def get_edit_distance(word1, word2):
     m, n = len(word1), len(word2)
     # if abs(m-n)>max_edit_distance: return max_edit_distance+1
