@@ -27,7 +27,7 @@ class Sentences(object):
 					yield wordlist
 
 def generate_ngram_count(n):
-	ngrams = []
+	ngrams = {}
 	sentences = Sentences(corpus_path)
 	for sentence in sentences:
 		l = len(sentence)
@@ -35,15 +35,16 @@ def generate_ngram_count(n):
 			tupple = ()
 			for k in range(n):
 				tupple += (sentence[i+k],)
-			ngrams.append(tupple)
+			ngram_str = "_".join(k for k in tupple)
+			# ngrams.append(tupple)
+			ngrams[ngram_str] = ngrams.get(ngram_str, 0) + 1
 
-	save_ngrams(Counter(ngrams), n)
+	save_ngrams(ngrams, n)
 
 def  save_ngrams(ngrams, n):
 	with open(str(n)+"_gram.txt", "a") as file:
 		for key in ngrams:
-			ngram_str = "_".join(k for k in key)
-			file.write(ngram_str+"	"+ str(ngrams[key])+"\n")
+			file.write(key+" "+str(ngrams[key])+"\n")
 			
 
 def build_TST():
@@ -70,7 +71,7 @@ def build_TST():
 
 def main():
 	stopwords = open(stopwords_path, 'r').read().rstrip('\n').split(',')
-	generate_ngram_count(1)
+	# generate_ngram_count(1)
 	generate_ngram_count(2)
 	generate_ngram_count(3)
 
