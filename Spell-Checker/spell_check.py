@@ -16,12 +16,23 @@ def  get_bn_wordlist(text, remove_stopwords = False):
 
 	return words
 
-def get_ngram_count(text, n):
-	table_name = "bigrams" if n==2 else "trigrams" 
-	result = cur.execute("select count from "+table_name+" where grams ='"+text+"';").fetchone()
-	if result:
-		return result[0]
-	else: return 0
+def get_ngram_count(text_grams):
+	# table_name = "bigrams" if n==2 else "trigrams" 
+	counts = [0, 0, 0]
+	if text_grams[0]:
+		result = cur.execute("select count from bigrams where grams ='"+text_grams[0]+"_"+text_grams[1]+"';").fetchone()
+		if result:
+			counts[0] = result[0]
+	if text_grams[2]:
+		result = cur.execute("select count from bigrams where grams ='"+text_grams[1]+"_"+text_grams[2]+"';").fetchone()
+		if result:
+			counts[1] = result[0]
+	if not None in text_grams:
+		result = cur.execute("select count from trigrams where grams ='"+text_grams[0]+"_"+text_grams[1]+"_"+text_grams[2]+"';").fetchone()
+		if result:
+			counts[2] = result[0]
+
+	return counts
 
 def weighted_score(left_bigram, right_bigram, trigram):
 	return left_bigram
@@ -33,14 +44,15 @@ def detect(sentence):
 
 	for i in range(l):
 		left_bigram, right_bigram, trigram = 0, 0, 0
+		confusion_set = []
+		text_grams = [None, words[i], None]
 		if i-1 > 0:
-			left_bigram = get_ngram_count(words[i-1]+"_"+words[i], 2)
+			text_grams[0] = words[i-1]
 		if i+1 < l:
-			right_bigram = get_ngram_count(words[i]+"_"+words[i+1], 2)
-		if i-1 > 0 and i+1 < l:
-			trigram = get_ngram_count(words[i-1]+"_"+words[i]+"_"+words[i+1], 3)
-
-		print (left_bigram, right_bigram, trigram)
+			text_grams[2] = words[i+1]
+		
+		if not sum(get_ngram_count(text_grams)):
+			print(False)
 
 
 
