@@ -2,10 +2,15 @@ import re, os
 import time
 from collections import Counter
 bn_char_pattern = re.compile(r'[^\u0980-\u0983\u0985-\u098C\u098F-\u0990\u0993-\u09A8\u09AA-\u09B0\u09B2\u09B6-\u09B9\u09BC-\u09C4\u09C7-\u09C8\u09CB-\u09CE\u09D7\u09DC-\u09DD\u09DF-\u09E3\u09F0-\u09FD]', re.UNICODE)
-corpus_path = "../corp"
+corpus_path = "../new_corp"
 stopwords_path = "../stop-words.txt"
-stopwords = []
+stopwords = open(stopwords_path, 'r').read().rstrip('\n').split(',')
 ngram_corpus_path = "n-gram_corpus"
+
+def chunks(data, rows = 10000):
+	l = len(data)
+	for i in range(0, l, rows):
+		yield data[i:i+rows]
 
 def  get_bn_wordlist(text, remove_stopwords = False):
 	text = re.sub(bn_char_pattern, ' ', text)
@@ -36,38 +41,42 @@ def generate_ngram_count(n):
 			for k in range(n):
 				tupple += (sentence[i+k],)
 			ngram_str = "_".join(k for k in tupple)
-			# ngrams.append(tupple)
 			ngrams[ngram_str] = ngrams.get(ngram_str, 0) + 1
 
-	save_ngrams(ngrams, n)
+	# save_ngrams(ngrams, n)
+	return ngrams
 
-def  save_ngrams(ngrams, n):
-	with open(str(n)+"_gram.txt", "a") as file:
-		for key in ngrams:
-			file.write(key+" "+str(ngrams[key])+"\n")
+def add_new_data(table_name, n):
+
+	ngrams = generate_ngram_count(n)
+	chunks_keys = chunks(list(ngrams.keys()))
+	counter = 1
+	import sqlite3
+	conn = sqlite3.connect("ngrams.db")
+	cur = conn.cursor()
+	sql_create_row = "insert into "+table_name+" (grams, count) values(?, ?);"
+	for keys in chunks_keys:
+		rows = []
+		for key in keys:
+			result = cur.execute("select * from "+table_name+" where grams = '"+key+"';").fetchone()
+			if result:
+				cur.execute("update "+table_name+" set count="+str(result[1]+ngrams[key])+" where grams = '"+key+"';").fetchone()
+			else:
+				rows.append((key, ngrams[key]))
+				# cur.execute("insert into "+table_name+" (grams, count) values(?, ?);", (key, ngrams[key]))
+		cur.executemany(sql_create_row, rows)	
+		print(counter)
+		counter += 1
+	conn.commit()
+	conn.close()
+
+
+
+# def  save_ngrams(ngrams, n):
+# 	with open(str(n)+"_gram.txt", "a") as file:
+# 		for key in ngrams:
+# 			file.write(key+" "+str(ngrams[key])+"\n")
 			
-
-def build_TST():
-	from TST import TST
-	tst = TST()
-	
-	for file_name in os.listdir(corpus_path):
-		with open(os.path.join(corpus_path, file_name), 'r', encoding = "utf-8") as file:
-			data = file.readlines()
-			chunks_data = chunks(data)
-			counter = 1
-			for chunk in chunks_data:
-				for line in chunk:
-					data = line.strip().split()
-					if len(data) == 2:
-						tst.insert(data[0], int(data[1]))
-				print(counter)
-				counter += 1
-	
-	print("success")
-	inp = int(input("proceed to see depth?"))
-	if inp:
-		print(tst.depth())
 
 def main():
 	stopwords = open(stopwords_path, 'r').read().rstrip('\n').split(',')
@@ -75,10 +84,6 @@ def main():
 	generate_ngram_count(2)
 	generate_ngram_count(3)
 
-def chunks(data, rows = 10000):
-	l = len(data)
-	for i in range(0, l, rows):
-		yield data[i:i+rows]
 
 def save_to_db(file_name, table_name):
 	import sqlite3
@@ -110,5 +115,6 @@ def save_to_db(file_name, table_name):
 
 if __name__ == '__main__':
 	# main()
-	save_to_db("3_gram.txt", "trigrams")
+	# save_to_db("3_gram.txt", "trigrams")
+	add_new_data("trigrams", 3)
 
