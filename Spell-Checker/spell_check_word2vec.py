@@ -20,16 +20,18 @@ def detect(sentence):
 	l = len(words)
 
 	for i in range(l):
-		# similarity = {}
+		total_similarity = 0
 		confusion_set = get_suggestions(words[i])
 		confusion_set[words[i]] = (0.0, )
 		for word in confusion_set:
 			try:
-				confusion_set[word] += (model.n_similarity([word], words[:i]+words[i+1:]), )
+				similarity = model.n_similarity([word], words[:i]+words[i+1:])
 			except Exception as e:
-				confusion_set[word] += (0.0, )
-#		print(confusion_set)
-		suggestions = sorted(confusion_set, key = lambda x: (-confusion_set[x][1], confusion_set[x][0]))
+				similarity = 0.0
+			confusion_set[word] += (similarity, )
+			total_similarity += similarity
+		
+		suggestions = sorted(confusion_set, key = lambda x: (-confusion_set[x][1]/total_similarity, confusion_set[x][0] ))
 		
 		if confusion_set[words[i]][1] > 0.01*confusion_set[suggestions[0]][1]:
 			suggestions = None

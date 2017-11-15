@@ -66,26 +66,26 @@ def get_suggestions(input_word):
 	suggestion_dic = {}
 	encoded_input_word = get_encoded_word(input_word)
 	encoded_input_word_len = len(encoded_input_word)
-
 	listed_encoded_words = []
 	if encoded_input_word in dictionary:
 		if encoded_input_word in encode_to_word_map:
 			listed_encoded_words.append(encoded_input_word)
+			phonetic_edit_dist = 0
 			for word in encode_to_word_map[encoded_input_word]:
-				typo_edit_distance = get_edit_distance(input_word, word)
-				if typo_edit_distance > max_edit_distance:
+				weighted_edit_distance = weighted_distance(phonetic_edit_dist, get_edit_distance(input_word, word))
+				if weighted_edit_distance > max_edit_distance:
 					continue
-				suggestion_dic[word] = (weighted_distance(0, typo_edit_distance), )
+				suggestion_dic[word] = (weighted_edit_distance, )
 
 		for encoded_word in dictionary[encoded_input_word]:
 			if encoded_word not in listed_encoded_words:
 				listed_encoded_words.append(encoded_word)
 				phonetic_edit_dist = len(encoded_word) - encoded_input_word_len
 				for word in encode_to_word_map[encoded_word]:
-					typo_edit_distance = get_edit_distance(input_word, word)
-					if typo_edit_distance > max_edit_distance:
+					weighted_edit_distance = weighted_distance(phonetic_edit_dist, get_edit_distance(input_word, word))
+					if weighted_edit_distance > max_edit_distance:
 						continue
-					suggestion_dic[word] = (weighted_distance(phonetic_edit_dist, typo_edit_distance), )
+					suggestion_dic[word] = (weighted_edit_distance, )
 
 	encoded_delete_words = []
 	create_delete_list(encoded_input_word, encoded_delete_words)
@@ -96,20 +96,20 @@ def get_suggestions(input_word):
 					listed_encoded_words.append(encoded_delete_word)
 					phonetic_edit_dist = encoded_input_word_len - len(encoded_delete_word)
 					for word in encode_to_word_map[encoded_delete_word]:
-						typo_edit_distance = get_edit_distance(input_word, word)
-						if typo_edit_distance > max_edit_distance:
+						weighted_edit_distance = weighted_distance(phonetic_edit_dist, get_edit_distance(input_word, word))
+						if weighted_edit_distance > max_edit_distance:
 							continue
-						suggestion_dic[word] = (weighted_distance(phonetic_edit_dist, typo_edit_distance), )
+						suggestion_dic[word] = (weighted_edit_distance, )
 
 			for encoded_word in dictionary[encoded_delete_word]:
 				if encoded_word not in listed_encoded_words:
 					listed_encoded_words.append(encoded_word)
 					phonetic_edit_dist = get_edit_distance(encoded_word, encoded_input_word)
 					for word in encode_to_word_map[encoded_word]:
-						typo_edit_distance = get_edit_distance(input_word, word)
-						if typo_edit_distance > max_edit_distance:
+						weighted_edit_distance = weighted_distance(phonetic_edit_dist, get_edit_distance(input_word, word))
+						if weighted_edit_distance > max_edit_distance:
 							continue
-						suggestion_dic[word] = (weighted_distance(phonetic_edit_dist, typo_edit_distance), )
+						suggestion_dic[word] = (weighted_edit_distance, )
 	return suggestion_dic
 
 dictionary, encode_to_word_map = generate_dictionary()
