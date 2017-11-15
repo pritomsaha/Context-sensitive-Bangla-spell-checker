@@ -9,7 +9,7 @@ encwordlist_path = "../sd_encwordlist.txt"
 corpus_path = "../corp"
 doublemetaphone = True
 if doublemetaphone:
-	encwordlist_path = "../dm_encwordlist.txt"
+	encwordlist_path = "dm_encwordlist.txt"
 
 def  get_wordlist(text):
 	text = re.sub(bn_char_pattern, ' ', text)
@@ -52,7 +52,6 @@ def get_word_freq():
 # 		for word in words:
 # 			infile.write(word+"\n")
 
-
 def create_encoded_freq_lexicon():
 	
 	def get_encoded_word(word):
@@ -64,6 +63,35 @@ def create_encoded_freq_lexicon():
 			encoded_word = get_encoded_word(word)
 			file.write(encoded_word+" "+word+" "+str(count)+"\n")
 
+def chunks(data, rows = 10000):
+	l = len(data)
+	for i in range(0, l, rows):
+		yield data[i:i+rows]
+
+def save_dic_to_db():
+	import sqlite3
+	conn = sqlite3.connect("../Spell-Checker/spell_checker.db")
+	cur = conn.cursor()
+	cur.execute("create table if not exists dictionary (word varchar(30) NOT NULL, encoded_word varchar(30) NOT NULL);")
+	counter = 1
+	sql_create_row = "insert into dictionary (word, encoded_word) values(?, ?);"
+	with open('../dm_encwordlist.txt', 'r') as file:
+		data = file.readlines()
+		chunks_data = chunks(data)
+		for chunk in chunks_data:
+			rows = []
+			for line in chunk:
+				data = line.strip().split()
+				if len(data) == 3:
+					rows.append((data[1], data[0]))
+				
+			cur.executemany(sql_create_row, rows)
+			print(counter)
+			counter += 1
+
+	conn.commit()
+	conn.close()
 
 if __name__ == '__main__':
-	create_encoded_freq_lexicon()
+	 create_encoded_freq_lexicon()
+#	save_dic_to_db()

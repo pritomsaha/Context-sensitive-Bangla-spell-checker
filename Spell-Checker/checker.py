@@ -2,22 +2,23 @@ import time
 from phonetic_encoder import soundex_encode, doublemetaphone_encode
 max_edit_distance = 1
 dict_path = "../sd_encwordlist.txt"
-doublemetaphone = True
+doublemetaphone = False
 if doublemetaphone:
 	dict_path = "../dm_encwordlist.txt"
-def get_edit_distance(word1, word2):
-    m, n = len(word1), len(word2)
-    # if abs(m-n)>max_edit_distance: return max_edit_distance+1
-    dp = [[0 for v in range(m+1) ] for __ in range(n+1) ]
-    for i in range(m+1):
-        dp[0][i] = i
-    for i in range(n+1):
-        dp[i][0] = i
-    for j in range(1, m+1):
-        for i in range(1, n+1):
-            dp[i][j] = min(dp[i-1][j-1] + (word1[j-1]!=word2[i-1]) , dp[i-1][j]+1, dp[i][j-1]+1)
-            
-    return dp[n][m]
+def get_edit_distance(s1, s2):
+    if len(s1) > len(s2):
+        s1, s2 = s2, s1
+
+    distances = range(len(s1) + 1)
+    for i2, c2 in enumerate(s2):
+        distances_ = [i2+1]
+        for i1, c1 in enumerate(s1):
+            if c1 == c2:
+                distances_.append(distances[i1])
+            else:
+                distances_.append(1 + min((distances[i1], distances[i1 + 1], distances_[-1])))
+        distances = distances_
+    return distances[-1]
 
 def get_encoded_word(word):
 	return doublemetaphone_encode(word) if doublemetaphone else soundex_encode(word)
@@ -87,13 +88,12 @@ def get_suggestion(dictionary, encode_to_word_map, input_word):
 					for word_tuple in encode_to_word_map[encoded_delete_word]:
 						suggestion_dic[word_tuple[0]] = (word_tuple[1], weighted_distance(phonetic_edit_dist, get_edit_distance(input_word, word_tuple[0])))
 
-			else:
-				for encoded_word in dictionary[encoded_delete_word]:
-					if encoded_word not in listed_encoded_words:
-						listed_encoded_words.append(encoded_word)
-						phonetic_edit_dist = get_edit_distance(encoded_word, encoded_input_word)
-						for word_tuple in encode_to_word_map[encoded_word]:
-							suggestion_dic[word_tuple[0]] = (word_tuple[1], weighted_distance(phonetic_edit_dist, get_edit_distance(input_word, word_tuple[0])))
+			for encoded_word in dictionary[encoded_delete_word]:
+				if encoded_word not in listed_encoded_words:
+					listed_encoded_words.append(encoded_word)
+					phonetic_edit_dist = get_edit_distance(encoded_word, encoded_input_word)
+					for word_tuple in encode_to_word_map[encoded_word]:
+						suggestion_dic[word_tuple[0]] = (word_tuple[1], weighted_distance(phonetic_edit_dist, get_edit_distance(input_word, word_tuple[0])))
 
 	return sorted(suggestion_dic, key = lambda x: (suggestion_dic[x][1], -suggestion_dic[x][0]))
 
@@ -123,19 +123,26 @@ def test(file_name, dictionary, encode_to_word_map):
 	print(count)
 
 
-
 def main():
-	start_time = time.time()
+	
 	dictionary, encode_to_word_map = generate_dictionary()
-	print((time.time() - start_time))
+	
+#	print(dictionary["asa"], encode_to_word_map["asar"])
 	start_time = time.time()
-	test("test.txt", dictionary, encode_to_word_map)
+	print(get_suggestion(dictionary, encode_to_word_map, "আসার"))
+	# test("test.txt", dictionary, encode_to_word_map)
+	
 	print((time.time() - start_time))
 	
 	
 if __name__ == '__main__':
 	main()
-#	print(soundex_encode("অনার্য"), doublemetaphone_encode("অনার্য"))
+	# start_time = time.time()
+	# print(levenshteinDistance("edit", "edt"))
+	# print(get_edit_distance("edit", "edt"))
+
+	# print(time.time()-start_time)
+#	print(soundex_encode("আষাঢ়"), doublemetaphone_encode("আষাঢ়"))
 
 # accuracy using wiki data
 
