@@ -1,0 +1,187 @@
+
+<!DOCTYPE html>
+{% load static %}
+<html>
+<head>
+	<title>Bangla Spell Checker</title>
+    <link rel="icon" type="image/png" href="{% static 'checker/bn.png' %}" />
+	<link rel="stylesheet" type="text/css" href="{% static 'checker/bootstrap.min.css' %}" />
+	<link rel="stylesheet" type="text/css" href="{% static 'checker/style.css' %}" />
+</head>
+<body>
+
+    <div class="container">
+    	<div class="row">
+    		<div class="col-md-8">
+    			<h2>Bangla Spell Checker</h2>
+
+    			<div class="form-group">
+    				<div class="box" id="text" contenteditable="true" spellcheck="false"></div>
+                    	
+    			</div>
+                
+    			<div class="form-group">
+    			     <button class="btn btn-primary" id="btn_spell_check">Spell Check</button>
+                     <button disabled class="btn btn-primary" id="btn_edit_text">Edit Text</button>
+    			     <span id="loader" hidden><img src="{% static 'checker/ajax-loader.gif' %}"></span>
+                </div>
+    			<br><br>
+    			
+    		</div>
+            <div class="col-md-4">
+                <br><br><br>
+                <div class="rules">
+                    <ol>
+                        <li> Write your text in the Text Area</li>
+                        <li> Press Spell check</li>
+                        <li> Errors are marked with different color:
+                            <ol type="a">
+                                <li><span class="word-highlight-nw">Red</span> color represents non word error</li>
+                                <li><span class="word-highlight-rw">Blue</span> color represents real word error</li>
+                            </ol>
+                        </li>
+                        <li> Press Edit Text to edit text</li>
+                    </ol>
+                </div>
+                <br>
+                <div class="result" hidden>
+                    
+                </div>
+            </div>
+    	</div>
+    </div>
+
+    <div>
+        <div class="container text-center">
+            <p class="text-muted credit">Developed by Pritom Saha Akash</p>
+        </div>
+    </div>
+	
+<script src="{% static 'checker/jquery.min.js' %}"></script>
+<script src="{% static 'checker/bootstrap.min.js' %}"></script>
+<script type="text/javascript">
+
+    document.querySelector("div[contenteditable]").addEventListener("paste", function(e) {
+        e.preventDefault();
+        var text = e.clipboardData.getData("text/plain");
+        document.execCommand("insertHTML", false, text);
+    });
+
+	$(document).ready(function(){
+
+    	$('#btn_spell_check').click(function(){
+            $(".suggestion_window").hide();
+            // $text = $('#text').text();
+            $text = $('#text').html();
+            if($.trim($text).length == 0){
+                return;
+            }
+            $.ajax({
+                type: "POST",
+                url: "{% url "checker:result" %}",
+                data: {'text': $text},
+                beforeSend: function(){
+                    $('#btn_spell_check').attr('disabled', true);
+                    $('#loader').show();
+                },
+                success: function(data){
+                    $('#text').attr('contenteditable','false');
+                    $('#text').html(data.result_text);     
+                    $('#loader').hide();
+                    $('#btn_edit_text').attr('disabled', false);
+                    $('.result').html(data.result_info);
+                    $('.result').show()
+                },
+                // complete: function(){
+                // }
+            });
+        });
+
+        $('#btn_edit_text').click(function(){
+            $(".suggestion_window").hide();
+            $text = $('#text').html();
+            $.ajax({
+                type: "POST",
+                url: "{% url "checker:edit" %}",
+                data: {'text': $text},
+                beforeSend: function(){
+                    $('#btn_edit_text').attr('disabled', true);
+                    $('.result').hide();
+                    $('#loader').show();
+                },
+                success: function(result){
+                    $('#text').attr('contenteditable','true');
+                    $('#text').html(result);    
+                    $('#loader').hide();
+                    $('#btn_spell_check').attr('disabled', false);
+                },
+                // complete: function(){
+                // }
+            });
+        });
+        
+
+        $(".suggestion_window").click(function(e) {
+            e.stopPropagation(); 
+        });
+
+
+    });
+
+        $(document).on('click', 'td', function(e){
+            suggestion_window = $(this).closest('.suggestion_window');
+            span = $(":first-child", suggestion_window.prev());
+            span.removeClass();
+            span.html($(this).text());
+            ignore_link = suggestion_window.find('#ignore_link');
+            revert_link = suggestion_window.find('#revert_link');
+            $(".suggestion_window").hide();
+            ignore_link.hide();
+            revert_link.show();
+        });
+
+        function open_suggestion_window(_this){
+            position = $(_this).position();
+            $('body').append('<div class="overlay"></div>');
+            toggle_window = $(_this).next();
+            toggle_window.css('top', position.top + 17);
+            toggle_window.css('left', position.left + 10);
+            toggle_window.toggle();
+        
+            return false;
+        }
+
+        function close_window(){
+            $(".suggestion_window").hide();
+        }
+
+        function ignore_suggest(_this){
+            a = $(_this).parent().prev();
+            span = $(":first-child", a);
+            span.removeClass();
+            $(".suggestion_window").hide();
+        }
+
+        function revert(_this){
+            span = $(_this).find('span');
+            text = span.text();
+            cls = span.attr('class');
+            span = $(":first-child", $(_this).parent().prev());
+            span.removeClass()
+            span.addClass(cls)
+            span.text(text);
+            $(".suggestion_window").hide();   
+            $(_this).hide();
+            $(_this).prev().show()
+        }
+
+        $(document).click(function() {
+            if($(".suggestion_window:visible").length > 1){
+                $(".suggestion_window").hide();
+            }
+        });
+  
+</script>
+</body>
+
+</html>

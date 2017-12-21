@@ -1,0 +1,84 @@
+textarea{
+	width: 100%;
+	resize: none;
+}
+
+input#mis-word{
+	margin-bottom: 5px; 
+	width: 100%;
+}
+
+select{
+	width: 100%;
+}
+
+.word-link{
+	color: #006633;
+}
+
+.box{
+	height: 300px;
+	max-height: 300px;
+	overflow: auto;
+	border: 1px solid;
+	border-color: #bbbbbb;
+	padding: 10px;
+}
+
+
+.rules{
+	padding: 5px;
+	background: aliceblue;
+}
+
+.result{
+	padding: 5px;
+	background: antiquewhite;
+}
+
+span.word-highlight-nw{
+	color: red;
+}
+
+span.word-highlight-rw{
+	color: #00aff0;
+}
+table.suggest_tab{
+	width: 100%;
+}
+
+.suggestion_window{
+
+	font-size: 0.9em;
+    font-family: sans-serif;
+    text-align: left;
+    border: 1px solid #555;
+    background-color: #ecefff;
+    margin: 0;
+    position: absolute;
+    display: none;
+    z-index: 300;
+    padding: 10px;
+    width: 165px;
+    overflow: hidden;
+}
+
+td.suggest_op{
+	cursor: pointer !important;
+	list-style-type: none;
+	width: 100%;
+}
+
+.suggest_op:hover{
+	background-color: #FBEC72;
+}
+
+#hr_divider{
+	display: block;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    margin-left: auto;
+    margin-right: auto;
+    border-style: inset;
+    border-width: 1px;
+}
