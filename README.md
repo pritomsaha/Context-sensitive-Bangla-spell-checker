@@ -2,17 +2,15 @@
 Software Project Lab 3
 
 ## Proposed context sensitive spell checking approach and implementation
-In Spell Checker two major steps is misspelling detection and then providing sug-
-gestions of most likely valid word. As proposed spell checking approach can detect
-non-word and real-word error in text and provide suggestions, there is also the same
-challenge for both of the aforementioned errors.
-For detecting if a word is a non-word error, it is just checked if the word is in the
-lexicon. In the lexicon there are 112802 Bangla words. If the word is not in the
-lexicon, then it may happen that the stemmed of the word is in the lexicon. For
+In Spell Checker, two major steps are misspelling detection and then providing sug-
+gestions of most likely valid words. The proposed spell checking approach can detect
+non-word and real-word errors in the text and provide suggestions. There are challenges for detecting both of the aforementioned errors. For detecting if a word is a non-word error, it is just checked if the word is in the
+lexicon. For this project, we have generated a lexicon with 112802 Bangla words. If a word is not in the
+lexicon, then it may happen that the stemmed portion of the word is in the lexicon. For
 this, a rule based Bangla stemmer has been used to get stem of a Bangla word which
-take a file with some defined rules for stemming a given word. For example, for word
-"কাজটি", stemmed of this word will be "কাজ". If stemmed word also is not in the
-lexicon then, the word is marked as non-word error and for this valid suggestions
+takes a file with some defined rules for stemming a given word. For example, for the word
+"কাজটি", stemmed portion of this word will be "কাজ". If the stemmed word also is not in the
+lexicon then the word is marked as non-word error and for this valid suggestions
 should be generated.
 
 As real-word is contextual error which depends on the context of the word. To find
