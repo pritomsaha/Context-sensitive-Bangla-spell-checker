@@ -1,31 +1,16 @@
 # Context-sensitive-Bangla-spell-checker
 Software Project Lab 3
 
-## Proposed context sensitive spell checking approach and implementation
-In Spell Checker, two major steps are misspelling detection and then providing sug-
-gestions of most likely valid words. The proposed spell checking approach can detect
-non-word and real-word errors in the text and provide suggestions. There are challenges for detecting both of the aforementioned errors. For detecting if a word is a non-word error, it is just checked if the word is in the
-lexicon. For this project, we have generated a lexicon with 112802 Bangla words. If a word is not in the
-lexicon, then it may happen that the stemmed portion of the word is in the lexicon. For
-this, a rule based Bangla stemmer has been used to get stem of a Bangla word which
-takes a file with some defined rules for stemming a given word. For example, for the word
-"কাজটি", stemmed portion of this word will be "কাজ". If the stemmed word also is not in the
-lexicon then the word is marked as non-word error and for this valid suggestions
-should be generated.
+## Proposed context-sensitive spell checking approach and implementation
+In Spell Checker, two major steps are misspelling detection and then providing suggestions of most likely valid words. The proposed spell-checking approach can detect non-word and real-word errors in the text and provide suggestions. There are challenges for detecting both of the errors mentioned above. For detecting, if a word is a non-word error, it is just checked if the word is in the lexicon. For this project, we have generated a lexicon with 112802 Bangla words. If a word is not in the
+lexicon, then the stemmed version may be in the lexicon. For
+this, a rule-based Bangla stemmer has been used to get the stem of a Bangla word which takes a file with some defined rules for stemming a given word. For example, for the word "কাজটি", the stemmed version of this word will be "কাজ". If the stemmed word also is not in the
+lexicon, then the word is marked as a non-word error, and for this, the valid suggestions should be generated.
 
-As real-word is contextual error which depends on the context of the word. To find
-if a word is contextually inappropriate in a sentence, here we can not think about
-the word in isolate way, words surrounding the given word should be in calculation
-to detect real-word error. Here word vectors generated before using word2vec models
-will be used. First a confusion set or candidate words set is generated and how how
-this set is produced that will be explained detail in the next section of suggestion
-generation.
-At first, cosine similarity of context words with given word and all the member of
-confusion set is calculated. Cosine similarity is calculated by taking the dot product of
-two word vectors’ unit-vector. Before calculating the dot product, vectors of context
-words are averaged into one single vector. Here for context words, we have chosen left
-two words and right two words of the given word. After calculating cosine similarity,we will get similarity score between -1 and 1. But here if a cosine similarity value is
-less than 0 then, we have turned them to 0(zero). It may happen that the given word
+In the real-word, there are contextual errors that depend on the word's context. To find if a word is contextually inappropriate in a sentence, we can not think about the word in an isolated way; the words surrounding the word should be in the calculation to detect a real-word error. Here word vectors generated before using word2vec models will be used. First, a confusion set or candidate words set is generated, and how
+this set is produced that will be explained in detail in the next section of the suggestion generation.
+At first, cosine similarity of context words with the given word and all the confusion set members are calculated. Cosine similarity is calculated by taking the dot product of the two word vectors' unit-vector. Before calculating the dot product, vectors of context
+words are averaged into one single vector. Here for context words, we have chosen the left two words and right two words of the given word. After calculating cosine similarity, we will get a similarity score between -1 and 1. But here, if a cosine similarity value is less than 0, we have turned them to 0(zero). It may happen that the given word
 to be detected or any word in the confusion set may not be in the vocabulary set of
 word vectors, for this we produced the stem of this word and if stemmed word is not
 also in the vocabulary of word vectors then we set the cosine similarity for that word
@@ -34,7 +19,7 @@ happen for context words. For this, we use the same technique of stemming the wo
 and get the vector of stemmed word and calculate the average o context word vectors.
 If the stemmed word also does not have the corresponding vector then we ignore the
 word and move to the same direction for another word and same technique for this
-word. If there are no context words in the left side or we don’t get any context word
+word. If there are no context words in the left side or we don't get any context word
 vector, then we ignore the given word for detection for real-word error and go to the
 next word.
 After performing the above calculation now we have cosine similarity value of all
@@ -55,7 +40,7 @@ technique has been used. Here words in confusion set are generated from words wh
 or are generated by one edit distance. Here double metaphone phonetic encoding
 technique has been used to encode word so that phonetically related words would
 have same or nearly distanced encoding. For example, after double metaphone encoding
-of অনয্ and অন্ will have same encoding ‘onn’. The encoded word and the original
+of অনয্ and অন্ will have same encoding 'onn'. The encoded word and the original
 Bangla word of every dictionary term are associated and stored in a datastructure
 in the pre-calculation step. After this for every encoded word there will be a list of
 original Bangla words mapped with the encoded word.
@@ -64,14 +49,14 @@ by deleting, transporting, replacing and inserting then for edit distance 1 and 
 word length of l it needs l deletions, l − 1 transposition, l + 1 insertion, l alterations.
 If we want to pre-calculate possible terms for 1 edit distance for all dictionary terms
 it is computationally expensive. To improve the speed of possible terms generation
-of certain edit distance, we have used the technique of FAROO’s Symmetric Delete
+of certain edit distance, we have used the technique of FAROO's Symmetric Delete
 Spelling Correction
 In the pre-calculation term all terms with upto one edit distance (deletes only) of
 every phonetically encoded words in the dictionary have been produced, then these
 delete words have been associated with their original encoded term and stored in
-a datastructure. For example for a delete encoded delete word ‘on’ the associated
-original encoded words are ’onn’, ’ont’, ’osn’, ’oln’, ’onD’, ’onn’, ’kon’, ’onu’, ’okn’,
-’ojn’, ’ond’, ’ojn’, ’onl’, ’omn’, ’ont’, ’oyn’, ’onr’. From previous Bangla word and
+a datastructure. For example for a delete encoded delete word 'on' the associated
+original encoded words are' onn',' ont',' osn',' oln',' onD',' onn',' kon',' onu',' okn',
+' ojn',' ond',' ojn',' onl',' omn',' ont',' oyn',' onr'. From previous Bangla word and
 encoded word association we can get the all the original Bangla words from all of these 
 encoded word. Now for any input word, following steps are followed for producing
 confusion set:
